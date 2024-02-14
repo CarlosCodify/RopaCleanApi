@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  driver_license: MyString
+  identity_card: MyString
+  motorcycle: one
+  person: one
+
+two:
+  driver_license: MyString
+  identity_card: MyString
+  motorcycle: two
+  person: two
