@@ -3,7 +3,10 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
-      resources :orders
+      resources :orders, shallow: true do
+        post :add_inventory, on: :member
+        post :add_payment, on: :member
+      end
       resources :brands
       resources :models
       resources :motorcycles
