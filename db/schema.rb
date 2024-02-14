@@ -138,6 +138,8 @@ ActiveRecord::Schema[7.0].define(version: 2024_02_14_161441) do
     t.string "email"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "user_id"
+    t.index ["user_id"], name: "index_people_on_user_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -159,10 +161,8 @@ ActiveRecord::Schema[7.0].define(version: 2024_02_14_161441) do
     t.json "tokens"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "person_id", null: false
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
-    t.index ["person_id"], name: "index_users_on_person_id"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
     t.index ["uid", "provider"], name: "index_users_on_uid_and_provider", unique: true
   end
@@ -182,5 +182,5 @@ ActiveRecord::Schema[7.0].define(version: 2024_02_14_161441) do
   add_foreign_key "orders", "order_statuses"
   add_foreign_key "orders", "payment_statuses"
   add_foreign_key "payments", "orders"
-  add_foreign_key "users", "people"
+  add_foreign_key "people", "users"
 end
