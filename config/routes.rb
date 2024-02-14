@@ -3,6 +3,14 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
+      resources :orders
+      resources :brands
+      resources :models
+      resources :motorcycles
+      resources :drivers
+      resources :customers, shallow: true do
+        post :add_address, on: :member
+      end
       resources :users, shallow: true do
         post :register, on: :collection
       end
