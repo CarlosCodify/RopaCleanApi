@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_02_14_161441) do
+ActiveRecord::Schema[7.0].define(version: 2024_02_16_163759) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -51,6 +51,7 @@ ActiveRecord::Schema[7.0].define(version: 2024_02_14_161441) do
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "unit_price"
   end
 
   create_table "customers", force: :cascade do |t|
@@ -68,6 +69,9 @@ ActiveRecord::Schema[7.0].define(version: 2024_02_14_161441) do
     t.bigint "person_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "status"
+    t.string "latitude"
+    t.string "longitude"
     t.index ["motorcycle_id"], name: "index_drivers_on_motorcycle_id"
     t.index ["person_id"], name: "index_drivers_on_person_id"
   end
@@ -139,6 +143,7 @@ ActiveRecord::Schema[7.0].define(version: 2024_02_14_161441) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id"
+    t.string "role"
     t.index ["user_id"], name: "index_people_on_user_id"
   end
 

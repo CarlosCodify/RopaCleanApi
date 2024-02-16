@@ -6,10 +6,14 @@ Rails.application.routes.draw do
       resources :orders, shallow: true do
         post :add_inventory, on: :member
         post :add_payment, on: :member
+        get :resume, on: :collection
       end
-      resources :brands
-      resources :models
-      resources :motorcycles
+      resources :brands, shallow: true do
+        resources :models
+      end
+      resources :motorcycles, shallow: true do
+        get :list, on: :collection
+      end
       resources :drivers
       resources :customers, shallow: true do
         post :add_address, on: :member

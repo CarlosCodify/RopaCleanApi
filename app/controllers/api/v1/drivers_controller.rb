@@ -17,7 +17,9 @@ class Api::V1::DriversController < ApplicationController
   def create
     @user = User.new(user_params)
     person = @user.build_person(person_params)
+    person.role = 'driver'
     driver = person.build_driver(driver_params)
+    driver.status = true
 
     if @user.save
 

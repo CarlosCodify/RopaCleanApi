@@ -11,7 +11,7 @@ class Api::V1::UsersController < ApplicationController
 
   # GET /api/v1/users/1
   def show
-    render json: @user
+    render json: @user.as_json(include: [ :person ])
   end
 
   # POST /api/v1/users
@@ -37,6 +37,7 @@ class Api::V1::UsersController < ApplicationController
   def register
     @user = User.new(user_params)
     person = @user.build_person(person_params)
+    person.role = 'customer'
     customer = person.build_customer(code: create_code)
 
     if @user.save

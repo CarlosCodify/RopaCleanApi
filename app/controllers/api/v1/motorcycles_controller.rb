@@ -5,7 +5,28 @@ class Api::V1::MotorcyclesController < ApplicationController
   def index
     @motorcycles = Motorcycle.all
 
-    render json: @motorcycles
+    render json: @motorcycles.map { |motorcycle|
+      motorcycle.as_json(include: {
+        model: {
+          include: :brand
+        },
+        driver: {
+          include: :person
+        }
+      })
+    }
+  end
+
+  def list
+    @motorcycles = Motorcycle.without_driver
+
+    render json: @motorcycles.map { |motorcycle|
+      motorcycle.as_json(include: {
+        model: {
+          include: :brand
+        }
+      })
+    }
   end
 
   # GET /api/v1/motorcycles/1

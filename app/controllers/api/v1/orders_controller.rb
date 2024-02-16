@@ -5,12 +5,45 @@ class Api::V1::OrdersController < ApplicationController
   def index
     @orders = Order.all
 
-    render json: @orders.as_json(include: [ :order_status, :payment_status, :pickup_address, :delivery_address ])
+    render json: @orders.map { |order|
+      order.as_json(include: [ :order_status, :payment_status, :pickup_address, :delivery_address,
+                               :payments, clothing_inventories: { include: :clothing_type },
+                               driver: { include: :person }, customer: { include: :person }])
+    }
+  end
+
+  # def index
+  #   @orders = Order.all
+
+  #   render json: @orders.as_json(include: [ :order_status, :payment_status, :pickup_address, :delivery_address ])
+  # end
+
+  # def index
+  #   @orders = Order.all
+
+  #   render json: @orders.as_json(include: [ :order_status, :payment_status, :pickup_address, :delivery_address ])
+  # end
+
+  def resume
+    pending_orders = Order.where(order_status_id: 2).count
+    closed_orders = Order.where(order_status_id: 3).count
+    payments_totals = Payment.all.sum(:amount)
+    drivers_availables = Driver.where(status: true).count
+    data = {
+      pending_orders: pending_orders,
+      closed_orders: closed_orders,
+      payments_totals: payments_totals,
+      drivers_availables: drivers_availables
+    }
+
+    render json: data
   end
 
   # GET /api/v1/orders/1
   def show
-    render json: @order
+    render json: @order.as_json(include: [ :order_status, :payment_status, :pickup_address, :delivery_address,
+                                           :payments, clothing_inventories: { include: :clothing_type },
+                                           driver: { include: :person }, customer: { include: :person }])
   end
 
   # POST /api/v1/orders

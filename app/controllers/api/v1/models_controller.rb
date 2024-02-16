@@ -1,9 +1,10 @@
 class Api::V1::ModelsController < ApplicationController
   before_action :set_model, only: %i[ show update destroy ]
+  before_action :set_brand, only: %i[ index ]
 
   # GET /api/v1/models
   def index
-    @models = Model.all
+    @models = @brand.models
 
     render json: @models
   end
@@ -42,6 +43,10 @@ class Api::V1::ModelsController < ApplicationController
     # Use callbacks to share common setup or constraints between actions.
     def set_model
       @model = Model.find(params[:id])
+    end
+
+    def set_brand
+      @brand = Brand.find(params[:brand_id])
     end
 
     # Only allow a list of trusted parameters through.
