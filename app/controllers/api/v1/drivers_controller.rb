@@ -1,5 +1,6 @@
 class Api::V1::DriversController < ApplicationController
-  before_action :set_driver, only: %i[ show update destroy ]
+  before_action :set_driver, only: %i[ show update destroy]
+  before_action :set_user, only: %i[ order order_list ]
 
   # GET /api/v1/drivers
   def index
@@ -43,6 +44,24 @@ class Api::V1::DriversController < ApplicationController
     @driver.destroy
   end
 
+  def order
+    @order = @user.driver.orders.where.not(order_status_id: 3).last
+
+    render json: @order.as_json(include: [ :order_status, :payment_status, :pickup_address, :delivery_address,
+                                           :payments, clothing_inventories: { include: :clothing_type },
+                                           driver: { include: :person }, customer: { include: :person }])
+  end
+
+  def order_list
+    @orders = @user.driver.orders
+
+    render json: @orders.map { |order|
+      order.as_json(include: [ :order_status, :payment_status, :pickup_address, :delivery_address,
+                               :payments, clothing_inventories: { include: :clothing_type },
+                               driver: { include: :person }, customer: { include: :person }])
+    }
+  end
+
   private
 
   def custom_json(driver)
@@ -54,6 +73,10 @@ class Api::V1::DriversController < ApplicationController
   # Use callbacks to share common setup or constraints between actions.
   def set_driver
     @driver = Driver.find(params[:id])
+  end
+
+  def set_user
+    @user = User.find(params[:id])
   end
 
   # Only allow a list of trusted parameters through.

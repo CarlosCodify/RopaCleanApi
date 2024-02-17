@@ -1,5 +1,5 @@
 class Api::V1::OrdersController < ApplicationController
-  before_action :set_order, only: %i[ show update destroy add_inventory add_payment]
+  before_action :set_order, only: %i[ show update destroy add_inventory add_payment update_status]
 
   # GET /api/v1/orders
   def index
@@ -12,17 +12,21 @@ class Api::V1::OrdersController < ApplicationController
     }
   end
 
-  # def index
-  #   @orders = Order.all
+  def update_status
+    order_status = OrderStatus.find_by(name: params[:order_status])
+    if order_status.name = 'Orden entregada.'
+      @order.update(order_status_id: 3, delivery_date_time: DateTime.now)
+      @order.driver.update(status: true)
+    elsif order_status.name = 'En camino a la lavanderia.'
+      @order.update(order_status_id: order_status.id, pickup_date_time: DateTime.now)
+    else
+      @order.update(order_status_id: order_status.id)
+    end
 
-  #   render json: @orders.as_json(include: [ :order_status, :payment_status, :pickup_address, :delivery_address ])
-  # end
-
-  # def index
-  #   @orders = Order.all
-
-  #   render json: @orders.as_json(include: [ :order_status, :payment_status, :pickup_address, :delivery_address ])
-  # end
+    render json: @order.as_json(include: [ :order_status, :payment_status, :pickup_address, :delivery_address,
+                               :payments, clothing_inventories: { include: :clothing_type },
+                               driver: { include: :person }, customer: { include: :person }])
+  end
 
   def resume
     pending_orders = Order.where(order_status_id: 2).count
@@ -49,6 +53,14 @@ class Api::V1::OrdersController < ApplicationController
   # POST /api/v1/orders
   def create
     @order = Order.new(order_params)
+    @order.scheduled_date_time = DateTime.now + 24.hours
+    drivers = Driver.where(status: true)
+    latitude = @order.pickup_address.latitude
+    longitude = @order.pickup_address.longitude
+    closest_driver = find_closest_driver(drivers, latitude.to_d, longitude.to_d)
+    @order.driver_id = closest_driver.id
+    @order.order_status_id = 1
+    @order.payment_status_id = 1
 
     if @order.save
       render json: @order, status: :created
@@ -61,6 +73,14 @@ class Api::V1::OrdersController < ApplicationController
     clothing_inventory = @order.clothing_inventories.build(clothing_inventory_params)
 
     if clothing_inventory.save
+      order = clothing_inventory.order
+      amount = clothing_inventory.quantity * clothing_inventory.clothing_type.unit_price
+      if order.total_amount = nil
+        order.update(total_amount: amount )
+      else
+        order.update(total_amount: order.total_amount + amount )
+      end
+
       render json: clothing_inventory, status: :created
     else
       render json: clothing_inventory.errors, status: :unprocessable_entity
@@ -99,8 +119,7 @@ class Api::V1::OrdersController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def order_params
-      params.require(:order).permit(:pickup_address_id, :delivery_address_id, :scheduled_date_time,
-                                    :pickup_date_time, :delivery_date_time, :total_amount, :notes)
+      params.require(:order).permit(:pickup_address_id, :delivery_address_id, :notes)
     end
 
     def clothing_inventory_params
@@ -109,5 +128,25 @@ class Api::V1::OrdersController < ApplicationController
 
     def payment_params
       params.require(:payment).permit(:amount, :date)
+    end
+
+    def distance(lat1, lon1, lat2, lon2)
+      # Fórmula de Haversine
+
+      dlon = lon2 - lon1
+      dlat = lat2 - lat1
+      a = Math.sin(dlat/2)**2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dlon/2)**2
+      c = 2 * Math.asin(Math.sqrt(a))
+      # Radio de la Tierra en kilómetros
+      r = 6371
+      return c * r
+    end
+
+    def find_closest_driver(drivers, latitude, longitude)
+      distances = drivers.map do |driver|
+        { driver: driver, distance: distance(latitude, longitude, driver.latitude.to_d, driver.longitude.to_d) }
+      end
+      distances.sort_by! { |d| d[:distance] }
+      return distances.first[:driver]
     end
 end

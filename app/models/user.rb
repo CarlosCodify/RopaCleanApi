@@ -8,4 +8,5 @@ class User < ActiveRecord::Base
   include DeviseTokenAuth::Concerns::User
 
   has_one :person, dependent: :destroy
+  has_one :driver, through: :person
 end

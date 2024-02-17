@@ -1,5 +1,6 @@
 class Api::V1::CustomersController < ApplicationController
-  before_action :set_customer, only: %i[ show update destroy ]
+  before_action :set_customer, only: %i[ show update destroy]
+  before_action :set_user, only: %i[ address add_address order_list]
 
   # GET /api/v1/customers
   def index
@@ -28,13 +29,39 @@ class Api::V1::CustomersController < ApplicationController
   end
 
   def add_address
-    @address = @customer.address.build(address_params)
+    @customer = @user.person.customer
+    @address = @customer.addresses.build(address_params)
 
     if @address.save
       render json: @address
     else
       render json: @address.errors, status: :unprocessable_entity
     end
+  end
+
+  def address
+    @customer = @user.person.customer
+    addresses = @customer.addresses
+
+    render json: addresses
+  end
+
+  def order_list
+    @customer = @user.person.customer
+    address_ids = @customer.addresses.pluck(:id)
+    @orders = Order.where(pickup_address_id: address_ids).or(Order.where(delivery_address_id: address_ids))
+
+    render json: @orders.map { |order|
+      order.as_json(include: [ :order_status, :payment_status, :pickup_address, :delivery_address,
+                               :payments, clothing_inventories: { include: :clothing_type },
+                               driver: { include: :person }, customer: { include: :person }])
+    }
+  end
+
+  def address_show
+    @address = Address.find(params[:id])
+
+    render json: @address
   end
 
   private
@@ -47,6 +74,10 @@ class Api::V1::CustomersController < ApplicationController
 
   def set_customer
     @customer = Customer.find(params[:id])
+  end
+
+  def set_user
+    @user = User.find(params[:id])
   end
 
   def customer_params
