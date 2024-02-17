@@ -29,7 +29,7 @@ class Api::V1::OrdersController < ApplicationController
   end
 
   def resume
-    pending_orders = Order.where(order_status_id: 2).count
+    pending_orders = Order.where.not(order_status_id: 3).count
     closed_orders = Order.where(order_status_id: 3).count
     payments_totals = Payment.all.sum(:amount)
     drivers_availables = Driver.where(status: true).count
@@ -63,6 +63,7 @@ class Api::V1::OrdersController < ApplicationController
     @order.payment_status_id = 1
 
     if @order.save
+      @order.driver.update(status: false)
       render json: @order, status: :created
     else
       render json: @order.errors, status: :unprocessable_entity
@@ -73,13 +74,15 @@ class Api::V1::OrdersController < ApplicationController
     clothing_inventory = @order.clothing_inventories.build(clothing_inventory_params)
 
     if clothing_inventory.save
+
       order = clothing_inventory.order
       amount = clothing_inventory.quantity * clothing_inventory.clothing_type.unit_price
-      if order.total_amount = nil
+      if order.total_amount == nil
         order.update(total_amount: amount )
       else
         order.update(total_amount: order.total_amount + amount )
       end
+      order.update(order_status_id: 2)
 
       render json: clothing_inventory, status: :created
     else
@@ -89,8 +92,11 @@ class Api::V1::OrdersController < ApplicationController
 
   def add_payment
     payment = @order.payments.build(payment_params)
+    payment.date = DateTime.now
 
     if payment.save
+      payment.order.update(payment_status_id: 2) if payment.order.total_amount > payment.amount
+      payment.order.update(payment_status_id: 3) if payment.order.total_amount ==  payment.order.total_amount + payment.amount
       render json: payment, status: :created
     else
       render json: payment.errors, status: :unprocessable_entity
@@ -111,6 +117,12 @@ class Api::V1::OrdersController < ApplicationController
     @order.destroy
   end
 
+  def clothing_types
+    clothing_types = ClothingType.all
+
+    render json: clothing_types
+  end
+
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_order
@@ -127,7 +139,7 @@ class Api::V1::OrdersController < ApplicationController
     end
 
     def payment_params
-      params.require(:payment).permit(:amount, :date)
+      params.require(:payment).permit(:amount)
     end
 
     def distance(lat1, lon1, lat2, lon2)

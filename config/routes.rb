@@ -7,6 +7,7 @@ Rails.application.routes.draw do
         post :add_inventory, on: :member
         post :add_payment, on: :member
         get :resume, on: :collection
+        get :clothing_types, on: :collection
         post :update_status, on: :member
       end
       resources :brands, shallow: true do
