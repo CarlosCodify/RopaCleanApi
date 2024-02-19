@@ -21,6 +21,8 @@ class Api::V1::DriversController < ApplicationController
     person.role = 'driver'
     driver = person.build_driver(driver_params)
     driver.status = true
+    driver.latitude = '-17.778307',
+    driver.longitude =  '-63.181040'
 
     if @user.save
 
