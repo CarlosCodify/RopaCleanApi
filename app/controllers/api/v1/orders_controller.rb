@@ -14,10 +14,11 @@ class Api::V1::OrdersController < ApplicationController
 
   def update_status
     order_status = OrderStatus.find_by(name: params[:order_status])
-    if order_status.name = 'Orden entregada.'
+
+    if order_status.name == 'Orden entregada.'
       @order.update(order_status_id: 3, delivery_date_time: DateTime.now)
       @order.driver.update(status: true)
-    elsif order_status.name = 'En camino a la lavanderia.'
+    elsif order_status.name == 'En camino a la lavanderia.'
       @order.update(order_status_id: order_status.id, pickup_date_time: DateTime.now)
     else
       @order.update(order_status_id: order_status.id)
@@ -96,7 +97,7 @@ class Api::V1::OrdersController < ApplicationController
 
     if payment.save
       payment.order.update(payment_status_id: 2) if payment.order.total_amount > payment.amount
-      payment.order.update(payment_status_id: 3) if payment.order.total_amount ==  payment.order.total_amount + payment.amount
+      payment.order.update(payment_status_id: 3) if payment.order.total_amount <=  payment.order.payments.sum(:amount)
       render json: payment, status: :created
     else
       render json: payment.errors, status: :unprocessable_entity
